@@ -72,5 +72,21 @@ namespace WaterSlide.Spline
             Pose pose = runtime.CurrentSlide.EvaluatePose(runtime.CurrentT, data.useSplineUp);
             followTarget.SetPositionAndRotation(pose.position, pose.rotation);
         }
+
+        public Pose GetCurrentPose(PlayerSlideRuntime runtime, PlayerSlideData data)
+        {
+            if (runtime == null || data == null || runtime.CurrentSlide == null)
+                return new Pose(transform.position, transform.rotation);
+
+            return runtime.CurrentSlide.EvaluatePose(runtime.CurrentT, data.useSplineUp);
+        }
+
+        public Pose GetPoseOnSlide(WaterSlideSpline slide, float t, PlayerSlideData data)
+        {
+            if (slide == null || data == null)
+                return new Pose(transform.position, transform.rotation);
+
+            return slide.EvaluatePose(Mathf.Clamp01(t), data.useSplineUp);
+        }
     }
 }

@@ -11,13 +11,29 @@ namespace WaterSlide.Player
         [Header("Action Names")]
         [SerializeField] private string actionMapName = "Player";
         [SerializeField] private string moveActionName = "Move";
+        [SerializeField] private string jumpActionName = "Jump";
 
         private InputAction moveAction;
+        private InputAction jumpAction;
         private Vector2 moveInput;
+        private bool jumpPressed;
 
         public Vector2 MoveInput => moveInput;
         public float HorizontalInput => moveInput.x;
         public float VerticalInput => moveInput.y;
+
+        public bool ConsumeJumpPressed()
+        {
+            bool wasPressed = jumpPressed;
+            jumpPressed = false;
+            return wasPressed;
+        }
+
+        public void OnJump(InputAction.CallbackContext context)
+        {
+            if (context.performed)
+                jumpPressed = true;
+        }
 
         private void Awake()
         {
@@ -28,12 +44,16 @@ namespace WaterSlide.Player
         {
             if (moveAction != null)
                 moveAction.Enable();
+            if (jumpAction != null)
+                jumpAction.Enable();
         }
 
         private void OnDisable()
         {
             if (moveAction != null)
                 moveAction.Disable();
+            if (jumpAction != null)
+                jumpAction.Disable();
         }
 
         private void Update()
@@ -65,6 +85,17 @@ namespace WaterSlide.Player
                 Debug.LogError($"[PlayerInputReader] Action '{moveActionName}' not found in map '{actionMapName}'.", this);
                 return;
             }
+
+            jumpAction = actionMap.FindAction(jumpActionName, true);
+            if (jumpAction == null)
+            {
+                Debug.LogError($"[PlayerInputReader] Action '{jumpActionName}' not found in map '{actionMapName}'.", this);
+                return;
+            }
+
+            jumpAction.performed += OnJump;
         }
+
+       
     }
 }

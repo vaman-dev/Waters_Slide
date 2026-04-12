@@ -185,95 +185,95 @@ MonoBehaviour:
           z: -0.06009599
           w: 0.70454824
     - Position:
-        x: 275.4
+        x: 253.9
         y: -23
         z: 0
       TangentIn:
         x: -0
         y: -0
-        z: -36.43695
+        z: -27.572525
       TangentOut:
         x: 0
         y: 0
-        z: 40.134087
+        z: 29.376379
       Rotation:
         value:
-          x: -0.030883651
-          y: 0.7008151
-          z: 0.030336987
-          w: 0.7120282
+          x: -0.049020797
+          y: 0.7054055
+          z: 0.049020797
+          w: 0.7054055
     - Position:
-        x: 396
+        x: 335.6
         y: 50
-        z: 4
+        z: 0
       TangentIn:
         x: -0
         y: -0
-        z: -37.910004
+        z: -24.876669
       TangentOut:
         x: 0
         y: 0
-        z: 35.94424
+        z: 23.720642
       Rotation:
         value:
-          x: -0.045799356
-          y: 0.7063032
-          z: -0.08046876
-          w: 0.70182836
+          x: 0.024434676
+          y: 0.70668447
+          z: -0.02456249
+          w: 0.70668006
     - Position:
-        x: 497.4
+        x: 400
         y: -26
         z: 0
       TangentIn:
         x: -0
         y: -0
-        z: -32.629845
+        z: -25.954752
       TangentOut:
         x: 0
         y: 0
-        z: 25.46601
+        z: 23.306435
       Rotation:
         value:
-          x: 0.032178752
-          y: 0.7126854
-          z: -0.07319404
-          w: 0.6969122
+          x: 0.092511676
+          y: 0.7010289
+          z: -0.09719879
+          w: 0.70039445
     - Position:
-        x: 570.11566
-        y: -0.0000032095923
+        x: 476
+        y: 0
         z: 0
       TangentIn:
         x: -0
         y: -0
-        z: -27.099955
+        z: -19.828926
       TangentOut:
         x: 0
         y: 0
-        z: 31.084938
+        z: 12.102127
       Rotation:
         value:
-          x: -0.08758697
-          y: 0.7016612
-          z: 0.03358198
-          w: 0.7063089
+          x: -0.21643786
+          y: 0.67316765
+          z: 0.16356447
+          w: 0.6879293
     - Position:
-        x: 671.7209
-        y: -0.0000020613857
+        x: 497.7
+        y: 20.6
         z: 0
       TangentIn:
         x: -0
         y: -0
-        z: -10.160522
+        z: -2.9920738
       TangentOut:
         x: 0
         y: 0
-        z: 10.160522
+        z: 2.9920738
       Rotation:
         value:
-          x: -0.0000000050334332
-          y: 0.70710677
-          z: 0.0000000029573428
-          w: 0.70710677
+          x: -0.26208305
+          y: 0.6567438
+          z: 0.26208305
+          w: 0.6567438
     m_MetaData:
     - Mode: 3
       Tension: 0.5
@@ -524,6 +524,57 @@ Transform:
   - {fileID: 641818939}
   m_Father: {fileID: 813553450}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &145401245
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 145401246}
+  - component: {fileID: 145401247}
+  m_Layer: 0
+  m_Name: Jump_Demo_To_Demo1
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &145401246
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 145401245}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1063353015}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &145401247
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 145401245}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 97bf907494f422d49acae2f46c348141, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::WaterSlide.Spline.SlideJumpConnection
+  sourceSlide: {fileID: 9349333}
+  targetSlide: {fileID: 1422457716}
+  targetLandingT: 0
+  jumpDuration: 1.2
+  jumpHeight: 21.4
+  drawGizmos: 1
+  arcResolution: 100
 --- !u!1001 &239025660
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -926,7 +977,7 @@ Light:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 410087039}
   m_Enabled: 1
-  serializedVersion: 12
+  serializedVersion: 13
   m_Type: 1
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_Intensity: 2
@@ -978,7 +1029,7 @@ Light:
   m_UseBoundingSphereOverride: 0
   m_UseViewFrustumForShadowCasterCull: 1
   m_ForceVisible: 0
-  m_ShadowRadius: 0
+  m_ShapeRadius: 0
   m_ShadowAngle: 0
   m_LightUnit: 1
   m_LuxAtDistance: 1
@@ -1084,7 +1135,7 @@ MonoBehaviour:
   m_Forward: 2
   m_PositionOffset:
     setup: 1
-    min: {x: 0, y: -0.54, z: 0}
+    min: {x: 0, y: -0.54, z: -1.16}
     max: {x: 0, y: 0, z: 0}
     randomX: 0
     randomY: 0
@@ -1313,6 +1364,38 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1063353014
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1063353015}
+  m_Layer: 0
+  m_Name: 'JumpConnections   '
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1063353015
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1063353014}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 145401246}
+  m_Father: {fileID: 1093023934}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1093023933
 GameObject:
   m_ObjectHideFlags: 0
@@ -1342,7 +1425,9 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
+  - {fileID: 1422457713}
   - {fileID: 9349332}
+  - {fileID: 1063353015}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1190202683
@@ -1508,6 +1593,7 @@ GameObject:
   - component: {fileID: 1420042182}
   - component: {fileID: 1420042181}
   - component: {fileID: 1420042183}
+  - component: {fileID: 1420042184}
   m_Layer: 0
   m_Name: Player
   m_TagString: Untagged
@@ -1559,6 +1645,10 @@ MonoBehaviour:
   playerData: {fileID: 11400000, guid: b4c8d92ca8eb5be41afebe9cc6ab497c, type: 2}
   startingSlide: {fileID: 9349333}
   splineFollowMotor: {fileID: 1420042179}
+  inputReader: {fileID: 1420042182}
+  jumpTransferMotor: {fileID: 1420042184}
+  jumpConnections:
+  - {fileID: 145401247}
   runtime:
     CurrentSlide: {fileID: 0}
     CurrentT: 0
@@ -1596,6 +1686,7 @@ MonoBehaviour:
   inputActions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
   actionMapName: Player
   moveActionName: Move
+  jumpActionName: Jump
 --- !u!114 &1420042183
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1623,6 +1714,237 @@ MonoBehaviour:
   bodyMaxRate: 25
   isOnWaterSlide: 1
   debugLogs: 1
+--- !u!114 &1420042184
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1420042177}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b713300e7bb53af4aab25fe6f736c448, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::WaterSlide.Player.JumpTransferMotor
+  followTarget: {fileID: 370008063}
+--- !u!1 &1422457712
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1422457713}
+  - component: {fileID: 1422457714}
+  - component: {fileID: 1422457715}
+  - component: {fileID: 1422457716}
+  m_Layer: 0
+  m_Name: DemoSlide1
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1422457713
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1422457712}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: -0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1093023934}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1422457714
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1422457712}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dab5c7d4c32e743048dfca98e2d5914f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.Splines::UnityEngine.Splines.SplineContainer
+  m_Spline:
+    m_EditModeType: 1
+    m_Knots: []
+    m_MetaData: []
+    m_Closed: 0
+    m_IntData:
+      m_Data: []
+    m_FloatData:
+      m_Data: []
+    m_Float4Data:
+      m_Data: []
+    m_ObjectData:
+      m_Data: []
+  m_Splines:
+  - m_EditModeType: 1
+    m_Knots:
+    - Position:
+        x: 544.77
+        y: 25
+        z: 0
+      TangentIn:
+        x: -0
+        y: -0
+        z: -5.862745
+      TangentOut:
+        x: 0
+        y: 0
+        z: 5.862745
+      Rotation:
+        value:
+          x: 0.15449546
+          y: 0.6900225
+          z: -0.15449546
+          w: 0.6900225
+    - Position:
+        x: 597.8
+        y: 0
+        z: 0
+      TangentIn:
+        x: -0
+        y: -0
+        z: -18.931204
+      TangentOut:
+        x: 0
+        y: 0
+        z: 18.765795
+      Rotation:
+        value:
+          x: 0.14114448
+          y: 0.6632771
+          z: -0.008803167
+          w: 0.73489064
+    - Position:
+        x: 654.7
+        y: 0
+        z: 9
+      TangentIn:
+        x: -0
+        y: -0
+        z: -17.690626
+      TangentOut:
+        x: 0
+        y: 0
+        z: 15.194925
+      Rotation:
+        value:
+          x: 4.6089297e-32
+          y: 0.6788387
+          z: 4.9853944e-32
+          w: 0.7342874
+    - Position:
+        x: 697.2
+        y: 0
+        z: 9
+      TangentIn:
+        x: -0
+        y: -0
+        z: -4.25
+      TangentOut:
+        x: 0
+        y: 0
+        z: 4.25
+      Rotation:
+        value:
+          x: 0
+          y: 0.70710677
+          z: 0
+          w: 0.70710677
+    m_MetaData:
+    - Mode: 0
+      Tension: 0.5
+    - Mode: 0
+      Tension: 0.5
+    - Mode: 0
+      Tension: 0.5
+    - Mode: 0
+      Tension: 0.5
+    m_Closed: 0
+    m_IntData:
+      m_Data: []
+    m_FloatData:
+      m_Data: []
+    m_Float4Data:
+      m_Data: []
+    m_ObjectData:
+      m_Data: []
+  m_Knots:
+    m_KnotsLink: []
+--- !u!114 &1422457715
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1422457712}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2b74686beb0670a4ea61325c0acf4411, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.Splines::UnityEngine.Splines.SplineInstantiate
+  m_Container: {fileID: 1422457714}
+  m_ItemsToInstantiate:
+  - prefab: {fileID: 0}
+    Prefab: {fileID: 6797299539114057710, guid: f64249329801aa34bbe1c4523340e1c2, type: 3}
+    probability: 0
+    Probability: 0
+  m_Method: 1
+  m_Space: 0
+  m_Spacing: {x: 2, y: 2}
+  m_Up: 2
+  m_Forward: 1
+  m_PositionOffset:
+    setup: 0
+    min: {x: 0, y: 0, z: 0}
+    max: {x: 0, y: 0, z: 0}
+    randomX: 0
+    randomY: 0
+    randomZ: 0
+    space: 0
+  m_RotationOffset:
+    setup: 0
+    min: {x: 0, y: 0, z: 0}
+    max: {x: 0, y: 0, z: 0}
+    randomX: 0
+    randomY: 0
+    randomZ: 0
+    space: 0
+  m_ScaleOffset:
+    setup: 0
+    min: {x: 0, y: 0, z: 0}
+    max: {x: 0, y: 0, z: 0}
+    randomX: 0
+    randomY: 0
+    randomZ: 0
+    space: 0
+  m_DeprecatedInstances: []
+  m_AutoRefresh: 1
+  m_Seed: 1815557926
+--- !u!114 &1422457716
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1422457712}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4c78fd11601b96c448fae7996fe129b7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::WaterSlide.Spline.WaterSlideSpline
+  splineContainer: {fileID: 1422457714}
+  followOffsetY: 0
 --- !u!1001 &1967150908
 PrefabInstance:
   m_ObjectHideFlags: 0

@@ -32,6 +32,7 @@ namespace WaterSlide.Spline
             if (splineContainer == null)
                 return transform.position;
 
+            t = Mathf.Clamp01(t);
             Vector3 localPos = splineContainer.EvaluatePosition(t);
             return splineContainer.transform.TransformPoint(localPos);
         }
@@ -41,6 +42,7 @@ namespace WaterSlide.Spline
             if (splineContainer == null)
                 return transform.forward;
 
+            t = Mathf.Clamp01(t);
             Vector3 localTangent = splineContainer.EvaluateTangent(t);
             return splineContainer.transform.TransformDirection(localTangent).normalized;
         }
@@ -50,6 +52,7 @@ namespace WaterSlide.Spline
             if (splineContainer == null)
                 return transform.up;
 
+            t = Mathf.Clamp01(t);
             Vector3 localUp = splineContainer.EvaluateUpVector(t);
             return splineContainer.transform.TransformDirection(localUp).normalized;
         }
