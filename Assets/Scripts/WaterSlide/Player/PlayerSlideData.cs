@@ -1,9 +1,7 @@
-namespace WaterSlide.Player
+public enum PlayerSlideState
 {
-    public enum PlayerSlideState
-    {
-        FollowingSpline,
-        Paused,
-        Finished
-    }
+    FollowingSpline,
+    Jumping,
+    Paused,
+    Finished
 }

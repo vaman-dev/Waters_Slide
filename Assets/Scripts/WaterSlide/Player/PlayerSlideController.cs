@@ -10,6 +10,9 @@ namespace WaterSlide.Player
         [SerializeField] private PlayerSlideData playerData;
         [SerializeField] private WaterSlideSpline startingSlide;
         [SerializeField] private SplineFollowMotor splineFollowMotor;
+        [SerializeField] private PlayerInputReader inputReader;
+        [SerializeField] private JumpTransferMotor jumpTransferMotor;
+        [SerializeField] private SlideJumpConnection[] jumpConnections;
 
         [Header("Runtime")]
         [SerializeField] private PlayerSlideRuntime runtime = new PlayerSlideRuntime();
@@ -20,12 +23,20 @@ namespace WaterSlide.Player
         private void Reset()
         {
             splineFollowMotor = GetComponent<SplineFollowMotor>();
+            inputReader = GetComponent<PlayerInputReader>();
+            jumpTransferMotor = GetComponent<JumpTransferMotor>();
         }
 
         private void Awake()
         {
             if (splineFollowMotor == null)
                 splineFollowMotor = GetComponent<SplineFollowMotor>();
+
+            if (inputReader == null)
+                inputReader = GetComponent<PlayerInputReader>();
+
+            if (jumpTransferMotor == null)
+                jumpTransferMotor = GetComponent<JumpTransferMotor>();
         }
 
         private void Start()
@@ -55,15 +66,32 @@ namespace WaterSlide.Player
             if (runtime.CurrentState == PlayerSlideState.Finished)
                 return;
 
+            if (jumpTransferMotor != null && jumpTransferMotor.IsJumping)
+            {
+                jumpTransferMotor.TickJump(Time.deltaTime);
+
+                if (!jumpTransferMotor.IsJumping)
+                {
+                    LandOnTargetSlide();
+                }
+
+                return;
+            }
+
             UpdateSpeed(Time.deltaTime);
 
             if (runtime.CurrentState == PlayerSlideState.FollowingSpline)
             {
-                splineFollowMotor.TickFollow(runtime, playerData, Time.deltaTime);
+                TryStartJump();
 
-                if (runtime.CurrentT >= 1f)
+                if (runtime.CurrentState == PlayerSlideState.FollowingSpline)
                 {
-                    OnReachedSplineEnd();
+                    splineFollowMotor.TickFollow(runtime, playerData, Time.deltaTime);
+
+                    if (runtime.CurrentT >= 1f)
+                    {
+                        OnReachedSplineEnd();
+                    }
                 }
             }
         }
@@ -82,6 +110,70 @@ namespace WaterSlide.Player
         {
             float targetSpeed = runtime.CurrentSpeed + playerData.acceleration * deltaTime;
             runtime.CurrentSpeed = Mathf.Clamp(targetSpeed, 0f, playerData.maxSpeed);
+        }
+
+        private void TryStartJump()
+        {
+            if (inputReader == null || jumpTransferMotor == null || jumpConnections == null)
+                return;
+
+            if (!inputReader.ConsumeJumpPressed())
+                return;
+
+            WaterSlideSpline currentSlide = runtime.CurrentSlide;
+            if (currentSlide == null)
+                return;
+
+            for (int i = 0; i < jumpConnections.Length; i++)
+            {
+                SlideJumpConnection connection = jumpConnections[i];
+
+                if (connection == null)
+                    continue;
+
+                if (!connection.IsValidForSlide(currentSlide))
+                    continue;
+
+                StartJump(connection);
+                return;
+            }
+        }
+
+        private void StartJump(SlideJumpConnection connection)
+        {
+            if (connection == null || connection.TargetSlide == null)
+                return;
+
+            Pose startPose = splineFollowMotor.GetCurrentPose(runtime, playerData);
+            Pose landingPose = splineFollowMotor.GetPoseOnSlide(connection.TargetSlide, connection.TargetLandingT, playerData);
+
+            runtime.CurrentState = PlayerSlideState.Jumping;
+
+            jumpTransferMotor.StartJump(
+                startPose.position,
+                startPose.rotation,
+                landingPose.position,
+                landingPose.rotation,
+                connection.TargetSlide,
+                connection.TargetLandingT,
+                connection.JumpDuration,
+                connection.JumpHeight
+            );
+        }
+
+        private void LandOnTargetSlide()
+        {
+            if (jumpTransferMotor == null || jumpTransferMotor.TargetSlide == null)
+                return;
+
+            runtime.CurrentSlide = jumpTransferMotor.TargetSlide;
+            runtime.CurrentT = jumpTransferMotor.TargetLandingT;
+            runtime.CurrentState = PlayerSlideState.FollowingSpline;
+
+            if (splineFollowMotor != null)
+            {
+                splineFollowMotor.SnapToSpline(runtime, playerData);
+            }
         }
 
         private void OnReachedSplineEnd()
