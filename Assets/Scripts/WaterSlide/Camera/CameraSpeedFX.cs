@@ -8,6 +8,7 @@ namespace WaterSlide.CameraSystem
     {
         [Header("References")]
         [SerializeField] private PlayerSlideController playerSlideController;
+        [SerializeField] private PlayerInputReader inputReader;
         [SerializeField] private Camera targetCamera;
         [SerializeField] private Transform cameraRoot;
 
@@ -23,16 +24,10 @@ namespace WaterSlide.CameraSystem
         [SerializeField] private float rotationLerpSpeed = 6f;
 
         [Header("Downhill Look")]
-        [Tooltip("How much camera pitches downward on steep downhill.")]
         [SerializeField] private float maxDownhillPitch = 18f;
-
-        [Tooltip("How much camera pitches downward just after landing.")]
         [SerializeField] private float landingPitchAmount = 8f;
-
-        [Tooltip("How quickly landing pitch fades back to normal.")]
         [SerializeField] private float landingPitchRecoverSpeed = 5f;
 
-        [Tooltip("Maps slope amount to pitch weight. 0 = uphill, 0.5 = flat, 1 = downhill.")]
         [SerializeField]
         private AnimationCurve downhillPitchCurve =
             new AnimationCurve(
@@ -45,6 +40,14 @@ namespace WaterSlide.CameraSystem
         [SerializeField] private bool enableJumpAlignment = true;
         [SerializeField] private float jumpRotationLerpSpeed = 4f;
 
+        [Header("Jump Mouse Look")]
+        [SerializeField] private bool enableJumpMouseLook = true;
+        [SerializeField] private float jumpLookSensitivityX = 0.08f;
+        [SerializeField] private float jumpLookSensitivityY = 0.08f;
+        [SerializeField] private float maxJumpLookYaw = 35f;
+        [SerializeField] private float maxJumpLookPitch = 20f;
+        [SerializeField] private float jumpLookReturnSpeed = 4f;
+
         [Header("Camera Shake")]
         [SerializeField] private bool enableShake = true;
         [SerializeField] private float shakeStartSpeed = 12f;
@@ -53,7 +56,6 @@ namespace WaterSlide.CameraSystem
         [SerializeField] private float maxShakeRotation = 0.8f;
         [SerializeField] private float shakeFrequency = 18f;
 
-        [Tooltip("0 = uphill, 0.5 = flat, 1 = downhill.")]
         [SerializeField]
         private AnimationCurve shakeBySlopeCurve =
             new AnimationCurve(
@@ -66,6 +68,9 @@ namespace WaterSlide.CameraSystem
         private bool wasJumpingLastFrame;
         private float shakeTime;
 
+        private float jumpLookYaw;
+        private float jumpLookPitch;
+
         private void Reset()
         {
             cameraRoot = transform;
@@ -75,6 +80,7 @@ namespace WaterSlide.CameraSystem
                 targetCamera = GetComponentInChildren<Camera>();
 
             playerSlideController = GetComponentInParent<PlayerSlideController>();
+            inputReader = GetComponentInParent<PlayerInputReader>();
         }
 
         private void Awake()
@@ -91,6 +97,9 @@ namespace WaterSlide.CameraSystem
             if (playerSlideController == null)
                 playerSlideController = GetComponentInParent<PlayerSlideController>();
 
+            if (inputReader == null)
+                inputReader = GetComponentInParent<PlayerInputReader>();
+
             if (cameraRoot != null)
                 baseLocalPosition = cameraRoot.localPosition;
         }
@@ -101,6 +110,7 @@ namespace WaterSlide.CameraSystem
                 return;
 
             UpdateLandingState();
+            UpdateJumpLook();
             UpdateFOV();
             UpdateCameraTransform();
         }
@@ -121,6 +131,27 @@ namespace WaterSlide.CameraSystem
                 0f,
                 landingPitchRecoverSpeed * Time.deltaTime
             );
+        }
+
+        private void UpdateJumpLook()
+        {
+            bool isJumping = IsJumping();
+
+            if (enableJumpMouseLook && isJumping && inputReader != null)
+            {
+                Vector2 look = inputReader.LookInput;
+
+                jumpLookYaw += look.x * jumpLookSensitivityX;
+                jumpLookPitch -= look.y * jumpLookSensitivityY;
+
+                jumpLookYaw = Mathf.Clamp(jumpLookYaw, -maxJumpLookYaw, maxJumpLookYaw);
+                jumpLookPitch = Mathf.Clamp(jumpLookPitch, -maxJumpLookPitch, maxJumpLookPitch);
+            }
+            else
+            {
+                jumpLookYaw = Mathf.Lerp(jumpLookYaw, 0f, jumpLookReturnSpeed * Time.deltaTime);
+                jumpLookPitch = Mathf.Lerp(jumpLookPitch, 0f, jumpLookReturnSpeed * Time.deltaTime);
+            }
         }
 
         private void UpdateFOV()
@@ -193,14 +224,19 @@ namespace WaterSlide.CameraSystem
 
                     Quaternion slideRotation = Quaternion.LookRotation(forward, up);
 
-                    // Negative X pitch usually means "look downward"
-                    Quaternion pitchOffset = Quaternion.Euler(
+                    Quaternion slopePitchOffset = Quaternion.Euler(
                         -(downhillPitch + landingPitchOffset),
                         0f,
                         0f
                     );
 
-                    return slideRotation * pitchOffset;
+                    Quaternion freeLookOffset = Quaternion.Euler(
+                        jumpLookPitch,
+                        jumpLookYaw,
+                        0f
+                    );
+
+                    return slideRotation * slopePitchOffset * freeLookOffset;
                 }
             }
 
