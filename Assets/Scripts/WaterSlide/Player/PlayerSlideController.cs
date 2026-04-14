@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using WaterSlide.Data;
 using WaterSlide.Spline;
+using WaterSlide.Visuals;
 
 namespace WaterSlide.Player
 {
@@ -13,6 +14,7 @@ namespace WaterSlide.Player
         [SerializeField] private PlayerInputReader inputReader;
         [SerializeField] private JumpTransferMotor jumpTransferMotor;
         [SerializeField] private SlideJumpConnection[] jumpConnections;
+        [SerializeField] private WaterSlideSplashController splashController;
 
         [Header("Runtime")]
         [SerializeField] private PlayerSlideRuntime runtime = new PlayerSlideRuntime();
@@ -27,9 +29,9 @@ namespace WaterSlide.Player
         [SerializeField]
         private AnimationCurve slopeSpeedMultiplierCurve =
             new AnimationCurve(
-                new Keyframe(0f, 0.55f),   // uphill
-                new Keyframe(0.5f, 1f),    // flat
-                new Keyframe(1f, 1.75f)    // downhill
+                new Keyframe(0f, 0.55f),
+                new Keyframe(0.5f, 1f),
+                new Keyframe(1f, 1.75f)
             );
 
         [SerializeField] private float slopeInfluence = 1f;
@@ -42,6 +44,7 @@ namespace WaterSlide.Player
             splineFollowMotor = GetComponent<SplineFollowMotor>();
             inputReader = GetComponent<PlayerInputReader>();
             jumpTransferMotor = GetComponent<JumpTransferMotor>();
+            splashController = GetComponent<WaterSlideSplashController>();
         }
 
         private void Awake()
@@ -54,6 +57,9 @@ namespace WaterSlide.Player
 
             if (jumpTransferMotor == null)
                 jumpTransferMotor = GetComponent<JumpTransferMotor>();
+
+            if (splashController == null)
+                splashController = GetComponent<WaterSlideSplashController>();
         }
 
         private void Start()
@@ -118,6 +124,9 @@ namespace WaterSlide.Player
             runtime.ResetRuntime(slide, playerData.startT, Mathf.Max(playerData.startSpeed, baseFlatSpeed));
             runtime.CurrentSpeed = Mathf.Clamp(runtime.CurrentSpeed, minSlideSpeed, maxSlideSpeedOverride);
 
+            if (splashController != null)
+                splashController.SetSlideContact(true);
+
             if (splineFollowMotor != null)
             {
                 splineFollowMotor.SnapToSpline(runtime, playerData);
@@ -135,16 +144,11 @@ namespace WaterSlide.Player
 
             tangent.Normalize();
 
-            // tangent.y < 0 => downhill, tangent.y > 0 => uphill
             float downhillAmount = -tangent.y * slopeInfluence;
-
-            // convert from [-1,1] to [0,1] for the curve
             float curveInput = Mathf.InverseLerp(-1f, 1f, downhillAmount);
             float slopeMultiplier = slopeSpeedMultiplierCurve.Evaluate(curveInput);
 
             float desiredSpeed = baseFlatSpeed * slopeMultiplier;
-
-            // Optional legacy acceleration influence kept small by design
             desiredSpeed += playerData.acceleration * deltaTime;
 
             float finalMaxSpeed = Mathf.Max(playerData.maxSpeed, maxSlideSpeedOverride);
@@ -190,7 +194,6 @@ namespace WaterSlide.Player
                 return;
 
             Pose startPose = splineFollowMotor.GetCurrentPose(runtime, playerData);
-
             bool canReachTarget = connection.IsWithinJumpDistance(startPose.position);
 
             WaterSlideSpline landingSlide;
@@ -199,7 +202,6 @@ namespace WaterSlide.Player
             if (canReachTarget)
             {
                 landingSlide = connection.TargetSlide;
-
                 landingT = Mathf.Clamp01(
                     connection.TargetLandingT +
                     connection.ForwardLandingBoostT
@@ -208,7 +210,6 @@ namespace WaterSlide.Player
             else
             {
                 landingSlide = runtime.CurrentSlide;
-
                 landingT = Mathf.Clamp01(
                     runtime.CurrentT +
                     connection.FallbackForwardOffsetT +
@@ -221,6 +222,11 @@ namespace WaterSlide.Player
                 landingT,
                 playerData
             );
+
+            if (splashController != null)
+            {
+                splashController.SetSlideContact(false);
+            }
 
             runtime.CurrentState = PlayerSlideState.Jumping;
 
@@ -249,6 +255,12 @@ namespace WaterSlide.Player
                 runtime.CurrentSpeed + 2f,
                 Mathf.Max(playerData.maxSpeed, maxSlideSpeedOverride)
             );
+
+            if (splashController != null)
+            {
+                splashController.SetSlideContact(true);
+                splashController.PlayLandingSplash();
+            }
 
             if (splineFollowMotor != null)
             {

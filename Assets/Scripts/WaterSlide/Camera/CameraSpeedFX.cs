@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 using WaterSlide.Player;
 using WaterSlide.Spline;
 
@@ -11,6 +11,7 @@ namespace WaterSlide.CameraSystem
         [SerializeField] private PlayerInputReader inputReader;
         [SerializeField] private Camera targetCamera;
         [SerializeField] private Transform cameraRoot;
+        [SerializeField] private PlayerSpeedBoostAbility boostAbility;
 
         [Header("Base Local Pose")]
         [SerializeField] private Vector3 baseLocalPosition = Vector3.zero;
@@ -55,6 +56,17 @@ namespace WaterSlide.CameraSystem
         [SerializeField] private float maxShakePosition = 0.025f;
         [SerializeField] private float maxShakeRotation = 0.8f;
         [SerializeField] private float shakeFrequency = 18f;
+
+        [Header("Boost Shake")]
+        [SerializeField] private bool enableBoostShake = true;
+        [SerializeField] private float boostShakeMultiplier = 2.5f;
+        [SerializeField] private float boostFrequencyMultiplier = 1.8f;
+
+        [Header("Boost Visual Effect")]
+        [SerializeField] private bool enableBoostVisuals = true;
+        [SerializeField] private float boostFOVExtra = 8f;
+        [SerializeField] private float boostFOVLerpSpeed = 12f;
+        [SerializeField] private float boostRotationLerpMultiplier = 1.8f;
 
         [SerializeField]
         private AnimationCurve shakeBySlopeCurve =
@@ -165,10 +177,24 @@ namespace WaterSlide.CameraSystem
             float t = Mathf.InverseLerp(0f, maxSpeed, speed);
             float targetFOVValue = Mathf.Lerp(minFOV, maxFOV, t);
 
+            // 🔥 BOOST FOV SURGE
+            if (enableBoostVisuals && boostAbility != null && boostAbility.IsBoostActive)
+            {
+                targetFOVValue += boostFOVExtra;
+            }
+
+
+            float currentFOVLerpSpeed = fovLerpSpeed;
+
+            if (enableBoostVisuals && boostAbility != null && boostAbility.IsBoostActive)
+            {
+                currentFOVLerpSpeed = boostFOVLerpSpeed;
+            }
+
             targetCamera.fieldOfView = Mathf.Lerp(
                 targetCamera.fieldOfView,
                 targetFOVValue,
-                fovLerpSpeed * Time.deltaTime
+                currentFOVLerpSpeed * Time.deltaTime
             );
         }
 
@@ -189,6 +215,12 @@ namespace WaterSlide.CameraSystem
             );
 
             float currentLerpSpeed = IsJumping() ? jumpRotationLerpSpeed : rotationLerpSpeed;
+
+            // 🔥 BOOST → reduce smoothing lag (faster response)
+            if (enableBoostVisuals && boostAbility != null && boostAbility.IsBoostActive)
+            {
+                currentLerpSpeed *= boostRotationLerpMultiplier;
+            }
 
             cameraRoot.rotation = Quaternion.Slerp(
                 cameraRoot.rotation,
@@ -297,10 +329,24 @@ namespace WaterSlide.CameraSystem
             float slopeShake = shakeBySlopeCurve.Evaluate(slope01);
 
             float shakeAmount = speed01 * slopeShake;
+
+            // 🔥 BOOST OVERRIDE
+            if (enableBoostShake && boostAbility != null && boostAbility.IsBoostActive)
+            {
+                shakeAmount *= boostShakeMultiplier;
+            }
+
             if (shakeAmount <= 0.001f)
                 return;
 
-            shakeTime += Time.deltaTime * shakeFrequency;
+            float finalFrequency = shakeFrequency;
+
+            if (enableBoostShake && boostAbility != null && boostAbility.IsBoostActive)
+            {
+                finalFrequency *= boostFrequencyMultiplier;
+            }
+
+            shakeTime += Time.deltaTime * finalFrequency;
 
             float noiseX = Mathf.PerlinNoise(shakeTime, 0f) - 0.5f;
             float noiseY = Mathf.PerlinNoise(0f, shakeTime) - 0.5f;

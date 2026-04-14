@@ -28,6 +28,7 @@ namespace WaterSlide.Visuals
 
         [Header("Slide Contact")]
         [SerializeField] private bool isOnWaterSlide = true;
+        [SerializeField] private bool stopAndClearWhenAirborne = true;
 
         [Header("Debug")]
         [SerializeField] private bool debugLogs = false;
@@ -102,6 +103,8 @@ namespace WaterSlide.Visuals
                 return;
             }
 
+            EnsurePlayingAll();
+
             float speed01 = Mathf.InverseLerp(splashStartSpeed, maxSpeed, speed);
 
             float frontRate = Mathf.Lerp(frontMinRate, frontMaxRate, speed01);
@@ -146,6 +149,14 @@ namespace WaterSlide.Visuals
             PlayIfValid(bodySplash);
         }
 
+        private void EnsurePlayingAll()
+        {
+            PlayIfValid(frontSplash);
+            PlayIfValid(leftSplash);
+            PlayIfValid(rightSplash);
+            PlayIfValid(bodySplash);
+        }
+
         private void PlayIfValid(ParticleSystem ps)
         {
             if (ps == null)
@@ -155,8 +166,26 @@ namespace WaterSlide.Visuals
                 ps.Play(true);
         }
 
+        private void StopAndClearAll()
+        {
+            StopAndClear(frontSplash);
+            StopAndClear(leftSplash);
+            StopAndClear(rightSplash);
+            StopAndClear(bodySplash);
+        }
+
+        private void StopAndClear(ParticleSystem ps)
+        {
+            if (ps == null)
+                return;
+
+            ps.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+        }
+
         public void PlayLandingSplash(int frontBurst = 20, int sideBurst = 12, int bodyBurst = 16)
         {
+            EnsurePlayingAll();
+
             EmitBurst(frontSplash, frontBurst);
             EmitBurst(leftSplash, sideBurst);
             EmitBurst(rightSplash, sideBurst);
@@ -176,7 +205,16 @@ namespace WaterSlide.Visuals
             isOnWaterSlide = value;
 
             if (!isOnWaterSlide)
+            {
                 SetEmissionRates(0f, 0f, 0f, 0f);
+
+                if (stopAndClearWhenAirborne)
+                    StopAndClearAll();
+            }
+            else
+            {
+                EnsurePlayingAll();
+            }
         }
     }
 }
