@@ -1,5 +1,6 @@
 using UnityEngine;
 using WaterSlide.Player;
+using WaterSlide.Spline;
 
 namespace WaterSlide.CameraSystem
 {
@@ -13,69 +14,76 @@ namespace WaterSlide.CameraSystem
         [Header("Base Local Pose")]
         [SerializeField] private Vector3 baseLocalPosition = Vector3.zero;
 
-        [Header("Speed FOV")]
-        [SerializeField] private float minSpeedForEffect = 4f;
-        [SerializeField] private float maxSpeedForEffect = 25f;
-        [SerializeField] private float minFOV = 60f;
-        [SerializeField] private float maxFOV = 78f;
-        [SerializeField] private float fovLerpSpeed = 6f;
+        [Header("FOV")]
+        [SerializeField] private float minFOV = 55f;
+        [SerializeField] private float maxFOV = 60f;
+        [SerializeField] private float fovLerpSpeed = 10f;
 
-        [Header("Slope Camera Offset")]
-        [SerializeField] private float maxForwardOffset = 0.45f;
-        [SerializeField] private float maxDownwardOffset = 0.15f;
-        [SerializeField] private float positionLerpSpeed = 6f;
+        [Header("Rotation")]
+        [SerializeField] private float rotationLerpSpeed = 6f;
 
-        [Tooltip("Input is normalized slope amount from -1 to 1. -1 = steep uphill, 0 = flat, 1 = steep downhill.")]
+        [Header("Downhill Look")]
+        [Tooltip("How much camera pitches downward on steep downhill.")]
+        [SerializeField] private float maxDownhillPitch = 18f;
+
+        [Tooltip("How much camera pitches downward just after landing.")]
+        [SerializeField] private float landingPitchAmount = 8f;
+
+        [Tooltip("How quickly landing pitch fades back to normal.")]
+        [SerializeField] private float landingPitchRecoverSpeed = 5f;
+
+        [Tooltip("Maps slope amount to pitch weight. 0 = uphill, 0.5 = flat, 1 = downhill.")]
         [SerializeField]
-        private AnimationCurve slopeCameraCurve =
-            new AnimationCurve(
-                new Keyframe(0f, 0f),
-                new Keyframe(0.5f, 0.35f),
-                new Keyframe(1f, 1f)
-            );
-
-        [Tooltip("Additional FOV response from slope. -1 uphill, 0 flat, 1 downhill mapped to 0..1 for curve.")]
-        [SerializeField]
-        private AnimationCurve slopeFOVCurve =
-            new AnimationCurve(
-                new Keyframe(0f, 0.2f),
-                new Keyframe(0.5f, 0.45f),
-                new Keyframe(1f, 1f)
-            );
-
-        [Header("High Speed Downhill Shake")]
-        [SerializeField] private bool enableShake = true;
-        [SerializeField] private float shakeStartSpeed = 14f;
-        [SerializeField] private float shakeMaxSpeed = 28f;
-        [SerializeField] private float maxShakePosition = 0.05f;
-        [SerializeField] private float maxShakeRotation = 1.5f;
-        [SerializeField] private float shakeFrequency = 18f;
-        [SerializeField]
-        private AnimationCurve shakeBySlopeCurve =
+        private AnimationCurve downhillPitchCurve =
             new AnimationCurve(
                 new Keyframe(0f, 0f),
                 new Keyframe(0.5f, 0.15f),
                 new Keyframe(1f, 1f)
             );
 
+        [Header("Jump Alignment")]
+        [SerializeField] private bool enableJumpAlignment = true;
+        [SerializeField] private float jumpRotationLerpSpeed = 4f;
+
+        [Header("Camera Shake")]
+        [SerializeField] private bool enableShake = true;
+        [SerializeField] private float shakeStartSpeed = 12f;
+        [SerializeField] private float shakeMaxSpeed = 25f;
+        [SerializeField] private float maxShakePosition = 0.025f;
+        [SerializeField] private float maxShakeRotation = 0.8f;
+        [SerializeField] private float shakeFrequency = 18f;
+
+        [Tooltip("0 = uphill, 0.5 = flat, 1 = downhill.")]
+        [SerializeField]
+        private AnimationCurve shakeBySlopeCurve =
+            new AnimationCurve(
+                new Keyframe(0f, 0f),
+                new Keyframe(0.5f, 0.1f),
+                new Keyframe(1f, 1f)
+            );
+
+        private float landingPitchOffset;
+        private bool wasJumpingLastFrame;
         private float shakeTime;
 
         private void Reset()
         {
-            if (cameraRoot == null)
-                cameraRoot = transform;
+            cameraRoot = transform;
+            targetCamera = GetComponent<Camera>();
 
             if (targetCamera == null)
                 targetCamera = GetComponentInChildren<Camera>();
 
-            if (playerSlideController == null)
-                playerSlideController = GetComponentInParent<PlayerSlideController>();
+            playerSlideController = GetComponentInParent<PlayerSlideController>();
         }
 
         private void Awake()
         {
             if (cameraRoot == null)
                 cameraRoot = transform;
+
+            if (targetCamera == null)
+                targetCamera = GetComponent<Camera>();
 
             if (targetCamera == null)
                 targetCamera = GetComponentInChildren<Camera>();
@@ -92,27 +100,140 @@ namespace WaterSlide.CameraSystem
             if (playerSlideController == null || playerSlideController.Runtime == null)
                 return;
 
-            float currentSpeed = playerSlideController.Runtime.CurrentSpeed;
+            UpdateLandingState();
+            UpdateFOV();
+            UpdateCameraTransform();
+        }
 
-            float speed01 = Mathf.InverseLerp(
-                minSpeedForEffect,
-                maxSpeedForEffect,
-                currentSpeed
+        private void UpdateLandingState()
+        {
+            bool isJumpingNow = playerSlideController.Runtime.CurrentState == PlayerSlideState.Jumping;
+
+            if (wasJumpingLastFrame && !isJumpingNow)
+            {
+                landingPitchOffset = landingPitchAmount;
+            }
+
+            wasJumpingLastFrame = isJumpingNow;
+
+            landingPitchOffset = Mathf.Lerp(
+                landingPitchOffset,
+                0f,
+                landingPitchRecoverSpeed * Time.deltaTime
+            );
+        }
+
+        private void UpdateFOV()
+        {
+            if (targetCamera == null)
+                return;
+
+            float speed = playerSlideController.Runtime.CurrentSpeed;
+            float maxSpeed = Mathf.Max(0.01f, playerSlideController.PlayerData.maxSpeed);
+
+            float t = Mathf.InverseLerp(0f, maxSpeed, speed);
+            float targetFOVValue = Mathf.Lerp(minFOV, maxFOV, t);
+
+            targetCamera.fieldOfView = Mathf.Lerp(
+                targetCamera.fieldOfView,
+                targetFOVValue,
+                fovLerpSpeed * Time.deltaTime
+            );
+        }
+
+        private void UpdateCameraTransform()
+        {
+            if (cameraRoot == null)
+                return;
+
+            Quaternion targetRotation = GetTargetRotation();
+            Vector3 shakePositionOffset;
+            Quaternion shakeRotationOffset;
+            GetShakeOffsets(out shakePositionOffset, out shakeRotationOffset);
+
+            cameraRoot.localPosition = Vector3.Lerp(
+                cameraRoot.localPosition,
+                baseLocalPosition + shakePositionOffset,
+                rotationLerpSpeed * Time.deltaTime
             );
 
-            float slope01 = GetSlopeNormalized01();
+            float currentLerpSpeed = IsJumping() ? jumpRotationLerpSpeed : rotationLerpSpeed;
 
-            UpdateFOV(speed01, slope01);
-            UpdateCameraPosition(speed01, slope01, currentSpeed);
+            cameraRoot.rotation = Quaternion.Slerp(
+                cameraRoot.rotation,
+                targetRotation * shakeRotationOffset,
+                currentLerpSpeed * Time.deltaTime
+            );
+        }
+
+        private Quaternion GetTargetRotation()
+        {
+            var runtime = playerSlideController.Runtime;
+            if (runtime == null || runtime.CurrentSlide == null)
+                return cameraRoot.rotation;
+
+            float slope01 = GetSlopeNormalized01();
+            float downhillPitchWeight = downhillPitchCurve.Evaluate(slope01);
+            float downhillPitch = maxDownhillPitch * downhillPitchWeight;
+
+            if (enableJumpAlignment && runtime.CurrentState == PlayerSlideState.Jumping)
+            {
+                JumpTransferMotor jumpMotor = playerSlideController.GetComponent<JumpTransferMotor>();
+
+                if (jumpMotor != null && jumpMotor.TargetSlide != null)
+                {
+                    Vector3 forward = jumpMotor.TargetSlide.EvaluateTangent(jumpMotor.TargetLandingT);
+                    Vector3 up = jumpMotor.TargetSlide.EvaluateUp(jumpMotor.TargetLandingT);
+
+                    if (forward.sqrMagnitude < 0.0001f)
+                        forward = cameraRoot.forward;
+
+                    if (up.sqrMagnitude < 0.0001f)
+                        up = Vector3.up;
+
+                    Quaternion slideRotation = Quaternion.LookRotation(forward, up);
+
+                    // Negative X pitch usually means "look downward"
+                    Quaternion pitchOffset = Quaternion.Euler(
+                        -(downhillPitch + landingPitchOffset),
+                        0f,
+                        0f
+                    );
+
+                    return slideRotation * pitchOffset;
+                }
+            }
+
+            Vector3 currentForward = runtime.CurrentSlide.EvaluateTangent(runtime.CurrentT);
+            Vector3 currentUp = runtime.CurrentSlide.EvaluateUp(runtime.CurrentT);
+
+            if (currentForward.sqrMagnitude < 0.0001f)
+                currentForward = cameraRoot.forward;
+
+            if (currentUp.sqrMagnitude < 0.0001f)
+                currentUp = Vector3.up;
+
+            Quaternion currentSlideRotation = Quaternion.LookRotation(currentForward, currentUp);
+            Quaternion currentPitchOffset = Quaternion.Euler(
+                -(downhillPitch + landingPitchOffset),
+                0f,
+                0f
+            );
+
+            return currentSlideRotation * currentPitchOffset;
+        }
+
+        private bool IsJumping()
+        {
+            return playerSlideController != null &&
+                   playerSlideController.Runtime != null &&
+                   playerSlideController.Runtime.CurrentState == PlayerSlideState.Jumping;
         }
 
         private float GetSlopeNormalized01()
         {
-            if (playerSlideController == null || playerSlideController.Runtime == null)
-                return 0.5f;
-
             var runtime = playerSlideController.Runtime;
-            if (runtime.CurrentSlide == null)
+            if (runtime == null || runtime.CurrentSlide == null)
                 return 0.5f;
 
             Vector3 tangent = runtime.CurrentSlide.EvaluateTangent(runtime.CurrentT);
@@ -125,84 +246,43 @@ namespace WaterSlide.CameraSystem
             return Mathf.InverseLerp(-1f, 1f, downhillAmount);
         }
 
-        private void UpdateFOV(float speed01, float slope01)
+        private void GetShakeOffsets(out Vector3 shakePositionOffset, out Quaternion shakeRotationOffset)
         {
-            if (targetCamera == null)
+            shakePositionOffset = Vector3.zero;
+            shakeRotationOffset = Quaternion.identity;
+
+            if (!enableShake || playerSlideController == null || playerSlideController.Runtime == null)
                 return;
 
-            float speedDrivenFOV = Mathf.Lerp(minFOV, maxFOV, speed01);
-            float slopeDrivenBlend = slopeFOVCurve.Evaluate(slope01);
-            float finalTargetFOV = Mathf.Lerp(minFOV, speedDrivenFOV, slopeDrivenBlend);
+            float currentSpeed = playerSlideController.Runtime.CurrentSpeed;
+            float speed01 = Mathf.InverseLerp(shakeStartSpeed, shakeMaxSpeed, currentSpeed);
 
-            targetCamera.fieldOfView = Mathf.Lerp(
-                targetCamera.fieldOfView,
-                finalTargetFOV,
-                fovLerpSpeed * Time.deltaTime
-            );
-        }
+            float slope01 = GetSlopeNormalized01();
+            float slopeShake = shakeBySlopeCurve.Evaluate(slope01);
 
-        private void UpdateCameraPosition(float speed01, float slope01, float currentSpeed)
-        {
-            if (cameraRoot == null)
+            float shakeAmount = speed01 * slopeShake;
+            if (shakeAmount <= 0.001f)
                 return;
 
-            float slopeCameraAmount = slopeCameraCurve.Evaluate(slope01);
+            shakeTime += Time.deltaTime * shakeFrequency;
 
-            float forwardOffset = maxForwardOffset * speed01 * slopeCameraAmount;
-            float downwardOffset = maxDownwardOffset * speed01 * slopeCameraAmount;
+            float noiseX = Mathf.PerlinNoise(shakeTime, 0f) - 0.5f;
+            float noiseY = Mathf.PerlinNoise(0f, shakeTime) - 0.5f;
+            float noiseZ = Mathf.PerlinNoise(shakeTime, shakeTime) - 0.5f;
 
-            Vector3 targetLocalPosition = baseLocalPosition + new Vector3(
-                0f,
-                -downwardOffset,
-                forwardOffset
+            shakePositionOffset = new Vector3(
+                noiseX * 2f * maxShakePosition * shakeAmount,
+                noiseY * 2f * maxShakePosition * shakeAmount,
+                0f
             );
 
-            Vector3 shakePositionOffset = Vector3.zero;
-            Vector3 shakeRotationOffset = Vector3.zero;
-
-            if (enableShake)
-            {
-                float shakeSpeed01 = Mathf.InverseLerp(shakeStartSpeed, shakeMaxSpeed, currentSpeed);
-                float shakeSlope01 = shakeBySlopeCurve.Evaluate(slope01);
-                float shakeAmount = shakeSpeed01 * shakeSlope01;
-
-                if (shakeAmount > 0.001f)
-                {
-                    shakeTime += Time.deltaTime * shakeFrequency;
-
-                    float noiseX = Mathf.PerlinNoise(shakeTime, 0f) - 0.5f;
-                    float noiseY = Mathf.PerlinNoise(0f, shakeTime) - 0.5f;
-                    float noiseZ = Mathf.PerlinNoise(shakeTime, shakeTime) - 0.5f;
-
-                    shakePositionOffset = new Vector3(
-                        noiseX * 2f * maxShakePosition * shakeAmount,
-                        noiseY * 2f * maxShakePosition * shakeAmount,
-                        0f
-                    );
-
-                    shakeRotationOffset = new Vector3(
-                        noiseY * 2f * maxShakeRotation * shakeAmount,
-                        noiseX * 2f * maxShakeRotation * shakeAmount,
-                        noiseZ * 2f * maxShakeRotation * 0.5f * shakeAmount
-                    );
-                }
-            }
-
-            Vector3 finalTargetLocalPosition = targetLocalPosition + shakePositionOffset;
-
-            cameraRoot.localPosition = Vector3.Lerp(
-                cameraRoot.localPosition,
-                finalTargetLocalPosition,
-                positionLerpSpeed * Time.deltaTime
+            Vector3 eulerOffset = new Vector3(
+                noiseY * 2f * maxShakeRotation * shakeAmount,
+                noiseX * 2f * maxShakeRotation * shakeAmount,
+                noiseZ * 2f * maxShakeRotation * 0.5f * shakeAmount
             );
 
-            Quaternion targetRotation = Quaternion.Euler(shakeRotationOffset);
-
-            cameraRoot.localRotation = Quaternion.Slerp(
-                cameraRoot.localRotation,
-                targetRotation,
-                positionLerpSpeed * Time.deltaTime
-            );
+            shakeRotationOffset = Quaternion.Euler(eulerOffset);
         }
     }
 }
